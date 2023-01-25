@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Astral Droids</title>
+		<link rel="stylesheet" href="game.css" />
+		<link
+			href="https://fonts.googleapis.com/css?family=Press+Start+2P"
+			rel="stylesheet"
+		/>
+		<link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
+	</head>
+	<body>
+		<div id="bgContainer">
+			<img src="bg.jpg" alt="" />
+		</div>
+		<div class="scorelivesContainer">
+			<div id="scoreContainer">
+				<h2 id="score">SCORE:</h2>
+				<span id="scoreSpan">0</span>
+			</div>
+			<div id="livesContainer">
+				<h2 id="lives">LIVES:</h2>
+				<i class="nes-icon is-medium heart"></i>
+				<i class="nes-icon is-medium heart"></i>
+				<i class="nes-icon is-medium heart"></i>
+			</div>
+			<div id="specialContainer" class="hidden">
+				<h2>SPECIAL READY</h2>
+			</div>
+		</div>
+		<dialog class="nes-dialog is-rounded is-dark" id="dialog-dark-rounded">
+			<form method="dialog">
+				<h1 class="title">You lost!</h1>
+				<p>Your score was <span id="scoreModal">0</span></p>
+				<p>Play again?</p>
+				<menu class="dialog-menu">
+					<button id="btnCancel" class="nes-btn">Cancel</button>
+					<button id="btnRestart" class="nes-btn is-primary">
+						Confirm
+					</button>
+				</menu>
+			</form>
+		</dialog>
+		<p class="nes-balloon from-left nes-pointer glBalloon" id="glBalloon">
+			Good luck Pilot!
+		</p>
+		<canvas id="gameCanvas"> </canvas>
+		<script>
+			class Ship {
+				constructor(x, y, c, ctx, W, H) {
+					this.x = x;
+					this.y = y;
+					this.c = c;
+					this.r = 20;
+					this.orientation = 0;
+					this.ctx = ctx;
+					this.W = W;
+					this.H = H;
+					this.bullets = [];
+					this.bulletsOrientationX = 2;
+					this.bulletsOrientationY = 2;
+					this.right = false;
+					this.left = false;
+					this.up = false;
+					this.down = false;
+					this.specialReady = false;
+				}
+
+				draw() {
+					ctx.fillStyle = this.c;
+					ctx.lineWidth = 3;
+					ctx.save();
+					ctx.translate(this.x, this.y);
+					ctx.rotate((this.orientation * Math.PI) / 180);
+					ctx.beginPath();
+					ctx.moveTo(0, 0);
+					ctx.lineTo(10, 0);
+					ctx.lineTo(0, -34);
+					ctx.lineTo(-10, 0);
+					ctx.lineTo(0, 0);
+					ctx.fill();
+					ctx.restore();
+				}
+
+				turnLeft() {
+					this.orientation = this.orientation - 4;
+				}
+
+				turnRight() {
+					this.orientation = this.orientation + 4;
+				}
+
+				goAhead() {
+					this.y =
+						this.y -
+						4 * Math.cos((this.orientation * Math.PI) / 180);
+					this.x =
+						this.x +
+						4 * Math.sin((this.orientation * Math.PI) / 180);
+				}
+
+				goBack() {
+					this.y =
+						this.y +
+						4 * Math.cos((this.orientation * Math.PI) / 180);
+					this.x =
+						this.x -
+						4 * Math.sin((this.orientation * Math.PI) / 180);
+				}
+
+				updateBullets() {
+					for (let i = 0; i < this.bullets.length; i++) {
+						this.bullets[i].y -= this.bullets[i].directionY;
+						this.bullets[i].x += this.bullets[i].directionX;
+						if (
+							this.bullets[i].y < 0 ||
+							this.bullets[i].y > this.H ||
+							this.bullets[i].x < 0 ||
+							this.bullets[i].x > this.W
+						) {
+							this.bullets.splice(i, 1); // remover a bala se esta atingir o minimo height do canvas
+							i--;
+						}
+					}
+				}
+
+				createBullet(key) {
+					if (key == 32) {
+						// cria uma bala na pos inicial do player
+						this.bullets.push({
+							x:
+								this.x +
+								20 *
+									Math.sin(
+										(this.orientation * Math.PI) / 180
+									),
+							y:
+								this.y -
+								20 *
+									Math.cos(
+										(this.orientation * Math.PI) / 180
+									),
+							w: 4,
+							h: 6,
+							directionY:
+								6 *
+								Math.cos((this.orientation * Math.PI) / 180),
+							directionX:
+								6 *
+								Math.sin((this.orientation * Math.PI) / 180),
+						});
+					} else if (key == 88) {
+						for (let l = 0; l < 30; l++) {
+							this.bullets.push({
+								x:
+									this.x +
+									20 *
+										Math.sin(
+											(this.orientation * Math.PI) / 180
+										),
+								y:
+									this.y -
+									20 *
+										Math.cos(
+											(this.orientation * Math.PI) / 180
+										),
+								w: 4,
+								h: 6,
+								directionY: 6 * Math.cos(l * 30),
+								directionX: 6 * Math.sin(l * 30),
+							});
+						}
+					}
+				}
+
+				drawBullets() {
+					// desenha todas as balas
+					for (let i = 0; i < this.bullets.length; i++) {
+						ctx.fillStyle = 'white';
+						ctx.fillRect(
+							this.bullets[i].x,
+							this.bullets[i].y,
+							this.bullets[i].w,
+							this.bullets[i].h
+						);
+					}
+				}
+
+				update() {
+					// update vertical position
+					if (this.y > this.H + this.r) {
+						this.y = this.y - (this.H + this.r);
+					}
+					if (this.y < -this.r) {
+						this.y = this.y + (this.H + this.r);
+					}
+					// update horizontal position
+					if (this.x > this.W + this.r) {
+						this.x = this.x - (this.W + this.r);
+					}
+					if (this.x < -this.r) {
+						this.x = this.x + (this.W + this.r);
+					}
+				}
+			}
+			class Asteroid {
+				constructor(x, y, r, d, c) {
+					this.x = x;
+					this.y = y;
+
+					this.dX = 0.1 * 5 * Math.cos(d);
+					this.dY = 0.1 * 5 * Math.sin(d);
+
+					this.c = c;
+					this.R = r;
+					this.state = 'alive';
+				}
+
+				draw() {
+					ctx.strokeStyle = this.c;
+					ctx.beginPath();
+					ctx.arc(this.x, this.y, this.R, 0, 2 * Math.PI);
+					ctx.stroke();
+				}
+
+				update() {
+					if (this.x < this.R || this.x > W - this.R) {
+						this.dX = -this.dX;
+					}
+					if (this.y < this.R || this.y > H - this.R) {
+						this.dY = -this.dY;
+					}
+
+					this.x += level * this.dX;
+					this.y += level * this.dY;
+				}
+			}
+
+			class Game {
+				constructor(ship, level) {
+					this.playerName = '';
+					this.ship = ship;
+					this.score = 0;
+					this.level = level;
+				}
+			}
+
+			let gameCanvas = document.querySelectorAll('#gameCanvas')[0];
+			const ctx = gameCanvas.getContext('2d');
+			gameCanvas.width = window.innerWidth;
+			gameCanvas.height = window.innerHeight;
+			const W = gameCanvas.width,
+				H = gameCanvas.height;
+
+			let shipColor = localStorage.getItem('ship');
+			let level = localStorage.getItem('level');
+
+			let scoreSpan = document.querySelectorAll('#scoreSpan')[0];
+
+			function gameStart() {
+				const gameInstance = new Game(shipColor, level);
+				const shipInstance = new Ship(
+					W / 2,
+					H / 2,
+					shipColor,
+					ctx,
+					W,
+					H
+				);
+				let asteroidArray = new Array();
+				let lives = 3;
+
+				// on key DOWN, check if it is an arrow, and signal the corresponding flag
+				window.addEventListener('keydown', (e) => {
+					if (e.key == 'ArrowRight') {
+						shipInstance.right = true;
+					}
+					if (e.key == 'ArrowLeft') {
+						shipInstance.left = true;
+					}
+					if (e.key == 'ArrowUp') {
+						shipInstance.up = true;
+					}
+					if (e.key == 'ArrowDown') {
+						shipInstance.down = true;
+					}
+					if (e.keyCode == 32) {
+						shipInstance.createBullet(e.keyCode);
+					}
+					if (e.keyCode == 88 && !shipInstance.specialReady) {
+						console.log('not ready');
+					} else if (e.keyCode == 88 && shipInstance.specialReady) {
+						console.log('ready');
+						shipInstance.createBullet(e.keyCode);
+						shipInstance.specialReady = false;
+						document
+							.getElementById('specialContainer')
+							.classList.add('hidden');
+						loadSpecial();
+					}
+					e.preventDefault();
+				});
+
+				// on key UP, check if it is an arrow, and signal the corresponding flag
+				window.addEventListener('keyup', (e) => {
+					e.preventDefault();
+					if (e.key == 'ArrowRight') shipInstance.right = false;
+					if (e.key == 'ArrowLeft') shipInstance.left = false;
+					if (e.key == 'ArrowUp') shipInstance.up = false;
+					if (e.key == 'ArrowDown') shipInstance.down = false;
+				});
+
+				for (let i = 0; i < level * 8; i++) {
+					let radius = Math.floor(Math.random() * 15) + 10;
+
+					let xInit =
+						radius * 2 + Math.random() * (W - 2 * (radius * 2));
+					let yInit =
+						radius * 2 + Math.random() * (H - 2 * (radius * 2));
+
+					let direction = Math.random() * 2 * Math.PI;
+
+					asteroidArray.push(
+						new Asteroid(xInit, yInit, radius, direction, 'red')
+					);
+				}
+
+				function render() {
+					//clear the Canvas
+					ctx.clearRect(0, 0, W, H);
+
+					//update circle position (and detect Canvas boundaries)
+					if (shipInstance.right == true) {
+						shipInstance.turnRight();
+					}
+
+					if (shipInstance.left == true) {
+						shipInstance.turnLeft();
+					}
+					if (shipInstance.up == true) {
+						shipInstance.goAhead();
+					}
+					if (shipInstance.down == true) {
+						shipInstance.goBack();
+					}
+
+					shipInstance.draw();
+					shipInstance.update();
+					shipInstance.drawBullets();
+					shipInstance.updateBullets();
+
+					asteroidArray.forEach((asteroid) => {
+						asteroid.draw();
+						asteroid.update();
+					});
+
+					for (let i = 0; i < asteroidArray.length; i++) {
+						let distanceX = asteroidArray[i].x - shipInstance.x;
+						let distanceY = asteroidArray[i].y - shipInstance.y;
+
+						let D = Math.sqrt(
+							distanceX * distanceX + distanceY * distanceY
+						);
+
+						if (D < shipInstance.r + asteroidArray[i].R) {
+							asteroidArray.splice(i, 1);
+							removeLives();
+							if (lives == 0) {
+								endGame();
+							}
+						}
+					}
+
+					for (let a = 0; a < asteroidArray.length; a++) {
+						for (let b = 0; b < shipInstance.bullets.length; b++) {
+							let distanceX =
+								asteroidArray[a].x - shipInstance.bullets[b].x;
+							let distanceY =
+								asteroidArray[a].y - shipInstance.bullets[b].y;
+
+							let D = Math.sqrt(
+								distanceX * distanceX + distanceY * distanceY
+							);
+
+							if (
+								D <
+								shipInstance.bullets[b].w / 2 +
+									asteroidArray[a].R
+							) {
+								asteroidArray.splice(a, 1);
+								let radius =
+									Math.floor(Math.random() * 15) + 10;
+
+								let xInit =
+									radius * 2 +
+									Math.random() * (W - 2 * (radius * 2));
+								let yInit =
+									radius * 2 +
+									Math.random() * (H - 2 * (radius * 2));
+
+								let direction = Math.random() * 2 * Math.PI;
+
+								asteroidArray.push(
+									new Asteroid(
+										xInit,
+										yInit,
+										radius,
+										direction,
+										'red'
+									)
+								);
+
+								gameInstance.score += 10;
+								scoreSpan.innerText = gameInstance.score;
+							}
+						}
+					}
+					window.requestAnimationFrame(render);
+				}
+
+				function loadSpecial() {
+					setTimeout(specialLoaded, 20000);
+				}
+
+				function specialLoaded() {
+					shipInstance.specialReady = true;
+					document
+						.getElementById('specialContainer')
+						.classList.remove('hidden');
+				}
+
+				function endGame() {
+					document.getElementById('dialog-dark-rounded').showModal();
+					document.getElementById('scoreModal').innerHTML =
+						gameInstance.score;
+				}
+
+				function hideShowBalloon() {
+					document
+						.getElementById('glBalloon')
+						.classList.add('active');
+					setTimeout(out, 3000);
+				}
+
+				function out() {
+					document
+						.getElementById('glBalloon')
+						.classList.remove('active');
+				}
+
+				function removeLives() {
+					let live = document.getElementsByTagName('i');
+					if (lives > 0) {
+						live[lives - 1].parentNode.removeChild(live[lives - 1]);
+						gameStart();
+						lives--;
+						console.log(lives);
+					}
+				}
+
+				loadSpecial();
+				render();
+				hideShowBalloon();
+			}
+
+			gameStart();
+
+			document
+				.querySelectorAll('#btnRestart')[0]
+				.addEventListener('click', () => location.reload());
+
+			document
+				.querySelectorAll('#btnCancel')[0]
+				.addEventListener(
+					'click',
+					() => (window.location.href = 'index.html')
+				);
+		</script>
+	</body>
+</html>

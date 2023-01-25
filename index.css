@@ -1,0 +1,153 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color: black;
+	overflow: hidden;
+}
+
+#title {
+	background-image: linear-gradient(
+		to right,
+		red 12.5%,
+		orange 25%,
+		yellow 37.5%,
+		green 50%,
+		teal 62.5%,
+		blue 75%,
+		purple 87.5%,
+		red 100%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	background-size: 300%;
+	background-position: -100%;
+	animation: textAnimation 2s infinite alternate-reverse;
+	user-select: none;
+	font-size: 45px;
+}
+
+#title:hover {
+	transform-origin: 50% 0%;
+	-webkit-transform: scale(1.2);
+	transition: all 0.2s ease;
+}
+
+#title:active {
+	-webkit-transform: scale(1.1);
+	transition: all 0.2s ease;
+}
+
+#title:not(:hover) {
+	-webkit-transform: scale(1);
+	transition: all 0.2s ease;
+}
+
+@keyframes textAnimation {
+	from {
+		background-position: 0%;
+	}
+	to {
+		background-position: 100%;
+	}
+}
+
+#bgContainer {
+	position: absolute;
+	top: 0;
+	z-index: 0;
+	background-color: black;
+}
+
+#bgContainer img {
+	width: 125%;
+	height: 100vh;
+}
+
+#startPage {
+	position: absolute;
+	z-index: 1;
+	width: 100%;
+	height: 100%;
+}
+
+#startPage div {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 25px;
+}
+
+#btnNewGame {
+	width: 40%;
+}
+
+#configPage {
+	position: absolute;
+	z-index: 1;
+	width: 100%;
+	height: 100%;
+}
+
+.shipChooseContainer {
+	padding-top: 30px;
+	width: 100%;
+	display: grid;
+	grid-template-columns: 1fr 0.3fr 1fr 0.3fr 1fr 0.3fr;
+	grid-template-rows: 100px;
+	font-size: 20px;
+}
+
+.shipChooseContainer label:first-child {
+	grid-column: 1/2;
+}
+
+.shipChooseContainer label:nth-child(2) {
+	grid-column: 3/4;
+}
+
+.shipChooseContainer label:nth-child(3) {
+	grid-column: 5/6;
+}
+
+.shipChooseContainer label:nth-child(4) {
+	grid-column: 7/8;
+}
+
+h1 {
+	color: White;
+}
+
+.shown {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#configPage.shown {
+	flex-direction: column;
+	gap: 70px;
+}
+
+#configPage.shown #configPageContainer2 {
+	display: flex;
+	flex-direction: column;
+	gap: 30px;
+	width: 60%;
+}
+
+.hidden {
+	display: none;
+}
+
+span {
+	color: white;
+}
+
+canvas {
+	position: absolute;
+	top: 0;
+}

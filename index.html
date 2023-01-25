@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Astral Droids</title>
+		<link rel="stylesheet" href="index.css" />
+		<link
+			href="https://fonts.googleapis.com/css?family=Press+Start+2P"
+			rel="stylesheet"
+		/>
+		<link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
+	</head>
+	<body>
+		<div id="bgContainer">
+			<img src="bg.jpg" alt="" />
+		</div>
+		<div id="startPage" class="shown">
+			<div>
+				<h1 id="title">Astral Droids</h1>
+				<button id="btnNewGame" class="nes-btn is-primary">
+					New Game
+				</button>
+			</div>
+		</div>
+		<div id="configPage" class="hidden">
+			<div id="configPageContainer2">
+				<div class="configPageContainer">
+					<h1>Choose Ship</h1>
+					<div class="shipChooseContainer">
+						<label>
+							<input
+								type="radio"
+								class="nes-radio is-dark"
+								name="answer-dark"
+								value="white"
+								checked
+							/>
+							<span>White</span>
+						</label>
+						<label>
+							<input
+								type="radio"
+								class="nes-radio is-dark"
+								name="answer-dark"
+								value="yellow"
+							/>
+							<span>Yellow</span>
+						</label>
+						<label>
+							<input
+								type="radio"
+								class="nes-radio is-dark"
+								name="answer-dark"
+								value="green"
+							/>
+							<span>Green</span>
+						</label>
+						<label>
+							<input
+								type="radio"
+								class="nes-radio is-dark"
+								name="answer-dark"
+								value="blue"
+							/>
+							<span>Blue</span>
+						</label>
+					</div>
+				</div>
+				<div class="configPageContainer">
+					<h1>Choose Level</h1>
+					<div class="nes-select is-dark">
+						<select required id="dark_select">
+							<option value="1">Easy</option>
+							<option value="2">Medium</option>
+							<option value="3">Hard</option>
+						</select>
+					</div>
+				</div>
+			</div>
+			<div>
+				<button class="btnStartGame nes-btn is-primary">
+					Start Game
+				</button>
+				<button class="btnBack nes-btn is-error">Back</button>
+			</div>
+		</div>
+		<script>
+			// Botão que leva o jogador para a página de config para iníciar um jogo
+			let btnNewGame = document.querySelectorAll('#btnNewGame')[0];
+			btnNewGame.focus();
+
+			// Páginas iníciais e de config respetivamente
+			let startPageDiv = document.querySelectorAll('#startPage')[0];
+			let configPageDiv = document.querySelectorAll('#configPage')[0];
+
+			// Botões no menu config para voltar para a página inícial e começar o jogo respetivamente
+			let btnBack = document.querySelectorAll('.btnBack');
+			let btnStartGame = document.querySelectorAll('.btnStartGame')[0];
+
+			// Botões Config - Escolher nave
+			let btnConfig = document.querySelectorAll('.btnConfig');
+
+			let shipSpan = document.querySelectorAll('#shipSpan')[0];
+
+			// Varáiveis que irão guardar o nível e nave utilizada pelo jogador
+			let ship = 'white';
+			let level = '1';
+			let highScores = [
+				{
+					name: 'God',
+					score: 1000000,
+				},
+			];
+
+			if (localStorage.highScores) {
+				highScores = JSON.parse(localStorage.getItem('highScores'));
+			} else {
+				localStorage.setItem('highScores', JSON.stringify(highScores));
+			}
+
+			btnNewGame.addEventListener('click', () => {
+				startPageDiv.classList.replace('shown', 'hidden');
+				configPageDiv.classList.replace('hidden', 'shown');
+				btnStartGame.focus();
+			});
+
+			btnBack[0].addEventListener('click', () => {
+				startPageDiv.classList.replace('hidden', 'shown');
+				configPageDiv.classList.replace('shown', 'hidden');
+				btnNewGame.focus();
+			});
+
+			btnStartGame.addEventListener('click', () => {
+				ship = document.querySelector(
+					'input[name="answer-dark"]:checked'
+				).value;
+				level = document.getElementById('dark_select').value;
+				localStorage.setItem('ship', ship);
+				localStorage.setItem('level', level);
+				window.location.href = 'game.html';
+			});
+		</script>
+	</body>
+</html>
