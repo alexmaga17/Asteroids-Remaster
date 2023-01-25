@@ -1,2 +1,2 @@
 # Asteroids-Remaster
-Old Asteroids Game Remastered (College project with @alexrr20 and @brunotrodrigues)
+Old Asteroids Game Remastered "Astral Droids" (College project with @alexrr20 and @brunotrodrigues)
